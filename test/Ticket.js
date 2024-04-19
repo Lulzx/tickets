@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Ticket", function () {
+describe("FootballTicket", function () {
   let contract;
   let owner;
   let addr1;
@@ -9,7 +9,7 @@ describe("Ticket", function () {
 
   beforeEach(async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
-    const Ticket = await ethers.getContractFactory("Ticket");
+    const Ticket = await ethers.getContractFactory("FootballTicket");
     contract = await Ticket.deploy();
   });
 

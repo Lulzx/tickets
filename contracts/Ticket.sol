@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract Ticket {
+contract FootballTicket {
     // Mapping of ticket IDs to their respective owners
     mapping (uint256 => address) public ticketOwners;
 
@@ -55,6 +55,7 @@ contract Ticket {
     // Sell a ticket
     function sellTicket(uint256 _ticketId, uint256 _newPrice) public {
         require(ticketOwners[_ticketId] == msg.sender, "Only the owner can sell the ticket");
+        require(!tickets[_ticketId].isForSale, "Ticket is already for sale");
         tickets[_ticketId].price = _newPrice;
         tickets[_ticketId].isForSale = true;
         emit TicketSold(_ticketId, msg.sender, _newPrice);
@@ -63,6 +64,7 @@ contract Ticket {
     // Trade a ticket
     function tradeTicket(uint256 _ticketId, address _newOwner) public {
         require(ticketOwners[_ticketId] == msg.sender, "Only the owner can trade the ticket");
+        require(!tickets[_ticketId].isForSale, "Ticket is for sale and cannot be traded");
         ticketOwners[_ticketId] = _newOwner;
         emit TicketTraded(_ticketId, msg.sender, _newOwner);
     }
