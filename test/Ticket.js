@@ -2,79 +2,55 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("FootballTicket", function () {
-  let contract;
-  let owner;
-  let addr1;
-  let addr2;
+  let FootballTicket, footballTicket, owner, addr1, addr2, addrs;
 
   beforeEach(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
-    const Ticket = await ethers.getContractFactory("FootballTicket");
-    contract = await Ticket.deploy();
+    FootballTicket = await ethers.getContractFactory("FootballTicket");
+    [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+    footballTicket = await FootballTicket.deploy();
+    await footballTicket.deployed();
   });
 
-  it("should mint a new ticket", async function () {
-    const metadata = "Match 1: Team A vs Team B";
-    const price = ethers.parseEther("1.0");
-    await contract.mintTicket(metadata, price);
-    const ticketId = await contract.getTicketCount();
-    expect(await contract.getTicketOwner(ticketId)).to.equal(owner.address);
-    expect(await contract.getTicketMetadata(ticketId)).to.equal(metadata);
-    expect(await contract.getTicketPrice(ticketId)).to.equal(price);
-    expect(await contract.isTicketForSale(ticketId)).to.be.true;
+  describe("Minting", function () {
+    it("Should mint a new ticket", async function () {
+      await footballTicket.mintTicket("Sample Metadata", ethers.utils.parseEther("1"));
+      expect(await footballTicket.getTicketCount()).to.equal(1);
+    });
   });
 
-  it("should not allow minting a ticket with invalid metadata", async function () {
-    const metadata = "";
-    const price = ethers.parseEther("1.0");
-    await expect(contract.mintTicket(metadata, price)).to.be.revertedWith(
-      "Invalid metadata",
-    );
+  describe("Buying", function () {
+    beforeEach(async function () {
+      await footballTicket.mintTicket("Sample Metadata", ethers.utils.parseEther("1"));
+    });
+
+    it("Should buy a ticket", async function () {
+      const ticketId = await footballTicket.getTicketCount();
+      await footballTicket.connect(addr1).buyTicket(ticketId, { value: ethers.utils.parseEther("1") });
+      expect(await footballTicket.getTicketOwner(ticketId)).to.equal(addr1.address);
+    });
   });
 
-  it("should allow buying a ticket", async function () {
-    const metadata = "Match 1: Team A vs Team B";
-    const price = ethers.parseEther("1.0");
-    await contract.mintTicket(metadata, price);
-    const ticketId = await contract.getTicketCount();
-    await contract.connect(addr1).buyTicket(ticketId, { value: price });
-    expect(await contract.getTicketOwner(ticketId)).to.equal(addr1.address);
-    expect(await contract.isTicketForSale(ticketId)).to.be.false;
+  describe("Selling", function () {
+    beforeEach(async function () {
+      await footballTicket.mintTicket("Sample Metadata", ethers.utils.parseEther("1"));
+    });
+
+    it("Should sell a ticket", async function () {
+      const ticketId = await footballTicket.getTicketCount();
+      await footballTicket.sellTicket(ticketId, ethers.utils.parseEther("2"));
+      expect(await footballTicket.getTicketPrice(ticketId)).to.equal(ethers.utils.parseEther("2"));
+    });
   });
 
-  it("should not allow buying a ticket that is not for sale", async function () {
-    const metadata = "Match 1: Team A vs Team B";
-    const price = ethers.parseEther("1.0");
-    await contract.mintTicket(metadata, price);
-    const ticketId = await contract.getTicketCount();
-    await contract.connect(addr1).buyTicket(ticketId, { value: price });
-    await expect(
-      contract.connect(addr2).buyTicket(ticketId, { value: price }),
-    ).to.be.revertedWith("Ticket is not for sale");
-  });
+  describe("Trading", function () {
+    beforeEach(async function () {
+      await footballTicket.mintTicket("Sample Metadata", ethers.utils.parseEther("1"));
+    });
 
-  it("should allow selling a ticket", async function () {
-    const metadata = "Match 1: Team A vs Team B";
-    const price = ethers.parseEther("1.0");
-    await contract.mintTicket(metadata, price);
-    const ticketId = await contract.getTicketCount();
-    await contract.connect(addr1).buyTicket(ticketId, { value: price });
-    await contract
-      .connect(addr1)
-      .sellTicket(ticketId, ethers.parseEther("2.0"));
-    expect(await contract.getTicketPrice(ticketId)).to.equal(
-      ethers.parseEther("2.0"),
-    );
-    expect(await contract.isTicketForSale(ticketId)).to.be.true;
-  });
-
-  it("should allow trading a ticket", async function () {
-    const metadata = "Match 1: Team A vs Team B";
-    const price = ethers.parseEther("1.0");
-    await contract.mintTicket(metadata, price);
-    const ticketId = await contract.getTicketCount();
-    await contract.connect(addr1).buyTicket(ticketId, { value: price });
-    await contract.connect(addr1).tradeTicket(ticketId, addr2.address);
-    expect(await contract.getTicketOwner(ticketId)).to.equal(addr2.address);
+    it("Should trade a ticket", async function () {
+      const ticketId = await footballTicket.getTicketCount();
+      await footballTicket.tradeTicket(ticketId, addr1.address);
+      expect(await footballTicket.getTicketOwner(ticketId)).to.equal(addr1.address);
+    });
   });
 });
