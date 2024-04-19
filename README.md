@@ -19,8 +19,8 @@ This project utilizes blockchain technology to create a secure and transparent t
 ### **Getting Started**
 1. Clone the repository: `git clone https://github.com/lulzx/tickets.git`
 2. Install dependencies: `bun install`
-3. Compile the smart contract: `truffle compile`
-4. Deploy the smart contract: `truffle deploy`
+3. Compile the smart contract: `hh compile`
+4. Deploy the smart contract: `hh deploy`
 5. Start the frontend: `bun start`
 ### **Contributing**
 Contributions are welcome! If you'd like to contribute to this project, please submit a pull request.
